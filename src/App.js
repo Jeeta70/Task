@@ -1,23 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 function Block({ list, handleClickCheckbox }) {
   return (
     <>
-      <div style={{ border: "1px solid black" }}>
-        {list.block}
-        {list?.checkBoxLists?.map((checkBox, index) => (
-          <div key={index}>
-            <input
-              type="checkbox"
-              id={checkBox}
-              name={checkBox}
-              value={checkBox}
-              onChange={(e) => handleClickCheckbox(e, index)}
-            />
-            <label htmlFor={checkBox}>{checkBox}</label>
-          </div>
-        ))}
+      <div
+        style={{ border: "1px solid black", height: "auto", width: "100px" }}
+      >
+        <div>
+          {list.block}
+          {list?.checkBoxLists?.map((checkBox, index) => (
+            <div key={index}>
+              <input
+                type="checkbox"
+                id={checkBox}
+                name={checkBox}
+                value={checkBox}
+                onChange={(e) => handleClickCheckbox(e, index)}
+              />
+              <label htmlFor={checkBox}>{checkBox}</label>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );
@@ -25,6 +29,7 @@ function Block({ list, handleClickCheckbox }) {
 
 function App() {
   let charCode = 65;
+ let maxLength = 0
   const [lists, setList] = useState([
     {
       block: `Block ${String.fromCharCode(charCode++)}`,
@@ -34,60 +39,66 @@ function App() {
       block: `Block ${String.fromCharCode(charCode++)}`,
       checkBoxLists: [],
     },
+    {
+      block: `Block ${String.fromCharCode(charCode++)}`,
+      checkBoxLists: [],
+    },
   ]);
 
-  const [checkedList, setCheckedList] = useState([]);
+  const [checkedLists, setCheckedLists] = useState([]);
+
+  useEffect(() => {
+    lists.forEach((i) => {
+      // console.log(i.checkBoxLists.length);
+      if (maxLength < i.checkBoxLists.length) {
+        maxLength = i.checkBoxLists.length
+      }
+    });
+  }, []);
+
+
   const handleClickCheckbox = (e) => {
     if (e.target.checked) {
-      setCheckedList([...checkedList, e.target.value]);
+      setCheckedLists([...checkedLists, e.target.value]);
     } else {
-      checkedList.splice(checkedList.indexOf(e.target.value), 1);
-      setCheckedList([...checkedList]);
+      checkedLists.splice(checkedLists.indexOf(e.target.value), 1);
+      setCheckedLists([...checkedLists]);
     }
   };
 
   const handleFrontButton = () => {
-    // console.log("lists",checkedList);
-    lists.forEach((list, index) => {
-      // console.log("list=>",list)
-      let moveIndex = -1;
-      let moveItem = "";
-      debugger
-      list.checkBoxLists.forEach((checkBoxItem,i) => {
-        // console.log(list,checkBoxItem);
-        const ans = checkedList.includes(checkBoxItem);
-        // console.log(checkedList,checkBoxItem);
-        // console.log(ans);
-        console.count()
-        if (ans) {
-          moveIndex = i;
-          moveItem = checkBoxItem;
-          console.log(moveIndex, moveItem);
-          // console.log(moveIndex)
-          list.checkBoxLists.splice(moveIndex,1)
-          // console.log(lists);
+    checkedLists.forEach((checkList) => {
+      let first = -1;
+      lists.forEach((list, index) => {
+        const ans = list.checkBoxLists.indexOf(checkList);
+        if (ans !== -1) {
+          first = index;
+          list.checkBoxLists.splice(ans, 1);
         }
       });
-      console.log(list);
-
-      // if(moveIndex !== -1){
-      //   lists[++moveIndex] = moveItem
-      // }
+      if (first !== -1) {
+        lists[++first]?.checkBoxLists.push(checkList);
+        first = -1;
+      }
+      setList([...lists]);
     });
+    setCheckedLists([])
   };
 
   return (
     <>
       {lists.map((list, index) => (
         <div key={index}>
-          <Block
-            list={list}
-            handleClickCheckbox={handleClickCheckbox}
-          />
+          <Block list={list} handleClickCheckbox={handleClickCheckbox} />
         </div>
       ))}
       <button type="button">Back</button>
-      <button type="button" onClick={handleFrontButton}>
+      <button type="button">Add More</button>
+      <button
+        type="button"
+        onClick={handleFrontButton}
+        disabled={lists.at(-1).checkBoxLists.length > maxLength}
+      >
         Front
       </button>
     </>
